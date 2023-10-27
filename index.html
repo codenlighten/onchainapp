@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<!-- bsv cdn unpkg -->
+		<script src="https://unpkg.com/bsv@1.5"></script>
+		<!-- montserrat -->
+		<link
+			href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
+			rel="stylesheet"
+		/>
+		<!-- twitter card -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@codenligten" />
+		<meta name="twitter:creator" content="@codenligten" />
+		<meta name="twitter:title" content="Onchain App Store" />
+		<meta
+			name="twitter:description"
+			content="Onchain App Store is a decentralized app store for Bitcoin SV. It is a place where you can find and use apps that are built on Bitcoin SV."
+		/>
+		<title>Onchain App Store</title>
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				padding: 0;
+				font-family: "Montserrat", sans-serif;
+			}
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 0 20px;
+			}
+			#header {
+				text-align: center;
+				margin-top: 20px;
+			}
+			#header h1 {
+				font-size: 40px;
+				font-weight: 700;
+			}
+			#header h2 {
+				font-size: 20px;
+				font-weight: 400;
+			}
+			#applist {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: space-between;
+			}
+			#applist div {
+				width: 30%;
+				margin-bottom: 20px;
+			}
+			#applist iframe {
+				width: 100%;
+				height: 300px;
+			}
+			#footer {
+				text-align: center;
+				margin-top: 20px;
+			}
+			#footer p {
+				font-size: 12px;
+				font-weight: 400;
+			}
+			#footer a {
+				color: #000;
+				text-decoration: none;
+			}
+			#footer a:hover {
+				text-decoration: underline;
+			}
+			input {
+				width: 100%;
+				height: 40px;
+				border: 1px solid #000;
+				border-radius: 5px;
+				padding: 0 10px;
+				margin-bottom: 20px;
+			}
+
+			@media screen and (max-width: 768px) {
+				#applist div {
+					width: 100%;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container" id="header">
+			<h1>Onchain App Store</h1>
+			<h2>Monitoring Address</h2>
+			<!-- loading status -->
+			<p id="status"></p>
+			<input type="text" id="monitoringAddress" />
+			<button id="submitAddress">Submit</button>
+			<p>
+				Onchain App Store is a decentralized app store for Bitcoin SV. It is a
+				place where you can find and use apps that are built on Bitcoin SV.
+			</p>
+		</div>
+		<div class="container" id="applist"></div>
+		<div class="container" id="footerCopyright2023">
+			<p>
+				Copyright 2023 Codenligten, SmartLedger, Onchain App Store. All rights
+				reserved
+			</p>
+		</div>
+		<script>
+			const statusElement = document.getElementById("status");
+
+			const monitoringAddressInput =
+				document.getElementById("monitoringAddress");
+
+			// "15PZaZYD9u6nhD8eGVY8pBKdumaDnuynCy";
+			const submitAddressButton = document.getElementById("submitAddress");
+			submitAddressButton.addEventListener("click", (e) => {
+				if (!e.target.value) return;
+				localStorage.setItem("monitoringAddress", e.target.value);
+				location.reload();
+			});
+
+			const Buffer = bsv.deps.Buffer;
+			const monitoringUtxos = async (monitoringAddress) => {
+				const res = await fetch(
+					`https://api.whatsonchain.com/v1/bsv/main/address/${monitoringAddress}/unspent`
+				);
+				const utxos = await res.json();
+				const oneSatArray = [];
+				console.log(utxos);
+				utxos.forEach((utxo) => {
+					if (utxo.value === 1) {
+						oneSatArray.push(utxo.tx_hash);
+					}
+				});
+				return oneSatArray;
+			};
+			const getTxInfo = async (txid) => {
+				const res = await fetch(
+					`https://api.whatsonchain.com/v1/bsv/main/tx/hash/${txid}`
+				);
+				const txInfo = await res.json();
+				return txInfo;
+			};
+
+			window.onload = async () => {
+				const monitoringAddress =
+					localStorage.getItem("monitoringAddress") ||
+					prompt("Enter monitoring address");
+				statusElement.textContent = "Loading...";
+				monitoringAddressInput.value = monitoringAddress;
+				if (!localStorage.getItem("monitoringAddress"))
+					localStorage.setItem("monitoringAddress", monitoringAddress);
+				const opReturnArray = await monitoringUtxos(monitoringAddress);
+				console.log(opReturnArray);
+
+				const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+				const txArray = [];
+				for (let i = 0; i < opReturnArray.length; i++) {
+					const txInfo = await getTxInfo(opReturnArray[i]);
+					console.log(txInfo);
+					txArray.push(txInfo);
+					await delay(2000);
+				}
+				console.log(txArray);
+
+				const convertHex = (hex) => {
+					let str = "";
+					for (let i = 0; i < hex.length; i += 2) {
+						str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+					}
+					return str;
+				};
+
+				const convertAsciiToBase64 = (ascii) => btoa(ascii); // This function will convert ASCII to Base64.
+
+				const convertAscii = (ascii, mediatype) => {
+					const base64 = convertAsciiToBase64(ascii);
+					if (mediatype.includes("image")) {
+						return `data:${mediatype};base64,${base64}`;
+					} else if (mediatype.includes("text")) {
+						return `data:${mediatype};charset=utf-8;base64,${base64}`;
+					} else {
+						return `data:${mediatype};base64,${base64}`;
+					}
+				};
+
+				const opReturnData = [];
+				txArray.forEach((tx) => {
+					if (tx.vout[0].scriptPubKey.asm.split(" ")[0] === "OP_RETURN") {
+						const opReturnDataFields = tx.vout[0].scriptPubKey.asm.split(" ");
+						// const name = convertHex(opReturnDataFields[1]);
+						opReturnDataFields.forEach((field, i) => {
+							if (i > 1) {
+								console.log(convertAscii(convertHex(field), "text"));
+							}
+						});
+						const data = convertHex(opReturnDataFields[2]);
+						const mediatype = opReturnDataFields[3]
+							? convertHex(opReturnDataFields[3])
+							: "image/png";
+						const dataUri = convertAscii(data, mediatype);
+						opReturnData.push({
+							name: convertHex(opReturnDataFields[1]),
+							data: dataUri,
+							mediatype,
+						});
+					}
+				});
+
+				console.log(opReturnData);
+
+				const appListElement = document.getElementById("applist");
+				opReturnData.forEach((app) => {
+					const appElement = document.createElement("div");
+					const iframeElement = document.createElement("iframe");
+					iframeElement.src = app.data;
+					//onclick
+					iframeElement.onclick = function () {
+						window.open(app.data);
+					};
+					iframeElement.title = app.name;
+					appElement.appendChild(iframeElement);
+					appListElement.appendChild(appElement);
+					statusElement.textContent = "";
+				});
+
+				const monitoringAddressElement =
+					document.getElementById("monitoringAddress");
+				monitoringAddressElement.textContent = `Monitoring Address: ${monitoringAddress}`; // Using textContent is safer than innerHTML.
+			};
+		</script>
+	</body>
+</html>
