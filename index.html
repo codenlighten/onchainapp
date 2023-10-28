@@ -149,10 +149,15 @@
 			};
 
 			window.onload = async () => {
-				const monitoringAddress =
-					localStorage.getItem("monitoringAddress") ||
-					prompt("Enter monitoring address");
+				if (!localStorage.getItem("monitoringAddress")) {
+					const address = prompt("Please enter a monitoring address");
+					if (address.length === 0)
+						return alert("Please enter a monitoring address");
+					localStorage.setItem("monitoringAddress", address);
+					location.reload();
+				}
 				statusElement.textContent = "Loading...";
+				const monitoringAddress = localStorage.getItem("monitoringAddress");
 				monitoringAddressInput.value = monitoringAddress;
 				if (!localStorage.getItem("monitoringAddress"))
 					localStorage.setItem("monitoringAddress", monitoringAddress);
