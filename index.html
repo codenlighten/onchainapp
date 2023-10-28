@@ -118,9 +118,10 @@
 
 			// "15PZaZYD9u6nhD8eGVY8pBKdumaDnuynCy";
 			const submitAddressButton = document.getElementById("submitAddress");
-			submitAddressButton.addEventListener("click", (e) => {
-				if (!e.target.value) return;
-				localStorage.setItem("monitoringAddress", e.target.value);
+			submitAddressButton.addEventListener("click", () => {
+				if (monitoringAddressInput.value.length === 0)
+					return alert("Please enter a monitoring address");
+				localStorage.setItem("monitoringAddress", monitoringAddressInput.value);
 				location.reload();
 			});
 
@@ -219,13 +220,69 @@
 				opReturnData.forEach((app) => {
 					const appElement = document.createElement("div");
 					const iframeElement = document.createElement("iframe");
+					const overlayDiv = document.createElement("div");
+
 					iframeElement.src = app.data;
-					//onclick
-					iframeElement.onclick = function () {
-						window.open(app.data);
-					};
 					iframeElement.title = app.name;
+
+					// Style the overlay div to be the same size as the iframe and position it on top
+					overlayDiv.style.width = "100%";
+					overlayDiv.style.height = "100%";
+					overlayDiv.style.position = "absolute";
+					overlayDiv.style.top = "0";
+					overlayDiv.style.left = "0";
+					overlayDiv.style.cursor = "pointer"; // Change the cursor to indicate it's clickable
+
+					overlayDiv.addEventListener("click", () => {
+						// turn into full page
+						if (iframeElement.style.position !== "fixed") {
+							iframeElement.style.position = "fixed";
+							iframeElement.style.top = "0";
+							iframeElement.style.left = "0";
+							iframeElement.style.width = "100%";
+							iframeElement.style.height = "100%";
+							iframeElement.style.border = "none";
+							iframeElement.style.zIndex = "999999";
+							iframeElement.style.backgroundColor = "#fff";
+							iframeElement.style.padding = "20px";
+							iframeElement.style.boxSizing = "border-box";
+							iframeElement.style.overflow = "scroll";
+							iframeElement.style.display = "block";
+							iframeElement.style.margin = "0";
+							iframeElement.style.boxShadow = "0 0 10px rgba(0,0,0,0.5)";
+							iframeElement.style.borderRadius = "5px";
+							iframeElement.style.maxWidth = "100%";
+							iframeElement.style.maxHeight = "100%";
+							iframeElement.style.margin = "0 auto";
+							iframeElement.style.top = "50%";
+							iframeElement.style.transform = "translateY(-50%)";
+						} else {
+							iframeElement.style.position = "relative";
+							iframeElement.style.top = "0";
+							iframeElement.style.left = "0";
+							iframeElement.style.width = "100%";
+							iframeElement.style.height = "300px";
+							iframeElement.style.border = "none";
+							iframeElement.style.zIndex = "999999";
+							iframeElement.style.backgroundColor = "#fff";
+							iframeElement.style.padding = "20px";
+							iframeElement.style.boxSizing = "border-box";
+							iframeElement.style.overflow = "scroll";
+							iframeElement.style.display = "block";
+							iframeElement.style.margin = "0";
+							iframeElement.style.boxShadow = "0 0 10px rgba(0,0,0,0.5)";
+							iframeElement.style.borderRadius = "5px";
+							iframeElement.style.maxWidth = "100%";
+							iframeElement.style.maxHeight = "100%";
+							iframeElement.style.margin = "0 auto";
+							iframeElement.style.top = "50%";
+							iframeElement.style.transform = "translateY(-50%)";
+						}
+					});
+
+					appElement.style.position = "relative"; // Make sure the appElement is positioned relatively so the absolute positioning of overlayDiv works
 					appElement.appendChild(iframeElement);
+					appElement.appendChild(overlayDiv); // Append the overlay div after the iframe
 					appListElement.appendChild(appElement);
 					statusElement.textContent = "";
 				});
